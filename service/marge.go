@@ -141,6 +141,9 @@ func (p *Service) LoadTaskMapInfo() (err error) {
 		return
 	}
 	for _, marge := range taskMap {
+		if !marge.Check() || !marge.Enable {
+			continue
+		}
 		err = p.CreateAutoMargeTask(&marge)
 		if err != nil {
 			return err
