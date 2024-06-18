@@ -19,13 +19,11 @@ func main() {
 	}
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-	for {
-		select {
-		case <-signalChan:
-			log.Println("退出")
-			s.DelTask()
-			os.Exit(0)
-		default:
-		}
+	select {
+	case <-signalChan:
+		log.Println("退出")
+		s.DelTask()
+		os.Exit(0)
 	}
+
 }

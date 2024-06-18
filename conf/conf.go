@@ -43,9 +43,9 @@ type Config struct {
 }
 
 func UpdateConfig(conf Config) (err error) {
-	rwlock.RLock()
+	rwlock.Lock()
 	gconf = conf
-	rwlock.RUnlock()
+	rwlock.Unlock()
 
 	_ = os.Remove("./conf.json")
 	by, err := json.Marshal(conf)
@@ -63,8 +63,8 @@ func UpdateConfig(conf Config) (err error) {
 
 func GetConfig() Config {
 	var conf Config
-	rwlock.Lock()
+	rwlock.RLock()
 	conf = gconf
-	rwlock.Unlock()
+	rwlock.RUnlock()
 	return conf
 }

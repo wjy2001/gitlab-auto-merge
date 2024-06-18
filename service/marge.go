@@ -50,9 +50,9 @@ func (p *Service) CreateAutoMergeTask(taskInfo *models.TaskAutoMerge) (err error
 		}
 	}()
 	wg.Wait()
-	taskMapInfo.rwlock.RLock()
+	taskMapInfo.rwlock.Lock()
 	taskMapInfo.taskMap[md5Str] = taskInfo
-	taskMapInfo.rwlock.RUnlock()
+	taskMapInfo.rwlock.Unlock()
 
 	return
 }
@@ -138,12 +138,12 @@ func (p *Service) GetUserByName(name string) (users []models.UserInfo, err error
 
 func (p *Service) DelTask() {
 	defer log.Println("任务删除完成")
-	taskMapInfo.rwlock.RLock()
+	taskMapInfo.rwlock.Lock()
 	for i, i2 := range taskMapInfo.taskMap {
 		i2.Cancel()
 		delete(taskMapInfo.taskMap, i)
 	}
-	taskMapInfo.rwlock.RUnlock()
+	taskMapInfo.rwlock.Unlock()
 }
 
 // 通过文件加载任务
