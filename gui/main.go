@@ -56,7 +56,7 @@ func choice() fyne.CanvasObject {
 
 	form.OnSubmit = func() {
 		var c = conf.Config{
-			Parameter: conf.ParameterS{
+			Parameter: conf.Parameter{
 				BasicUrl: baseUrlEntry.Text,
 				Token:    tokenEntry.Text,
 			},
@@ -130,27 +130,31 @@ func createTask() fyne.CanvasObject {
 	form.OnSubmit = func() {
 		intervalTime, _ := strconv.Atoi(IntervalTimeEntry.Text)
 
-		var req = models.TaskAutoMarge{
-			ProjectIDs:   arrStringToInt(projectIDsEntry.Text),
-			GroupIDs:     arrStringToInt(groupIDsEntry.Text),
-			SourceBranch: SourceBranchEntry.Text,
-			TargetBranch: TargetBranchEntry.Text,
-			Title:        TitleEntry.Text,
-			ReviewerID:   arrStringToInt(ReviewerIDEntry.Text),
-			IntervalTime: intervalTime,
-			CreatedTime:  time.Now(),
-			Enable:       false,
-			Cancel:       nil,
+		var req = models.TaskAutoMerge{
+			ProjectIDs:         arrStringToInt(projectIDsEntry.Text),
+			GroupIDs:           arrStringToInt(groupIDsEntry.Text),
+			SourceBranch:       SourceBranchEntry.Text,
+			TargetBranch:       TargetBranchEntry.Text,
+			Title:              TitleEntry.Text,
+			ReviewerID:         arrStringToInt(ReviewerIDEntry.Text),
+			IntervalTime:       intervalTime,
+			CreatedTime:        time.Now(),
+			RemoveSourceBranch: false,
+			Enable:             false,
+			Cancel:             nil,
 		}
-
+		//TODO: gui不好展示多任务 暂时先删除其余任务
 		p.DelTask()
 
-		err := p.CreateAutoMargeTask(&req)
+		err := p.CreateAutoMergeTask(&req)
 		if err != nil {
 			log.Println(err)
 		}
-		//重新初始化
-		p = service.NewService(platform.NewGitlab())
+		err = p.SaveTaskMapInfo()
+		if err != nil {
+			log.Println(err)
+		}
+
 	}
 	form.OnCancel = func() {
 		baseUrlEntry.Text = ""

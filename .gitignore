@@ -1,4 +1,9 @@
 .idea/
 *.exe
 *.json
+*.zip
 
+/bin/
+/cmd/bin/
+/gui/bin/
+/附件.md

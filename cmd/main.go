@@ -3,6 +3,10 @@ package main
 import (
 	"gitlab-auto-merge/platform"
 	"gitlab-auto-merge/service"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 // 无图形版本
@@ -10,8 +14,18 @@ func main() {
 	s := service.NewService(platform.NewGitlab())
 	err := s.LoadTaskMapInfo()
 	if err != nil {
-		panic(err)
+		log.Println("加载任务失败：", err)
+		s.DelTask()
 	}
-	defer s.DelTask()
-	select {}
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+	for {
+		select {
+		case <-signalChan:
+			log.Println("退出")
+			s.DelTask()
+			os.Exit(0)
+		default:
+		}
+	}
 }

@@ -24,6 +24,7 @@ func initConfig() {
 			log.Fatal(err)
 		}
 		initConfig()
+		return
 	}
 
 	err = json.Unmarshal(confBytes, &gconf)
@@ -32,12 +33,13 @@ func initConfig() {
 	}
 }
 
-type ParameterS struct {
+type Parameter struct {
 	BasicUrl string `json:"basic_url"`
 	Token    string `json:"token"`
 }
 type Config struct {
-	Parameter ParameterS `json:"parameter"`
+	Parameter        Parameter      `json:"parameter"`
+	ProjectBlacklist map[int]string `json:"project_blacklist"`
 }
 
 func UpdateConfig(conf Config) (err error) {

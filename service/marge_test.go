@@ -10,7 +10,7 @@ import (
 func TestService_CreateAutoMargeTask(t *testing.T) {
 
 	type args struct {
-		taskInfo *models.TaskAutoMarge
+		taskInfo *models.TaskAutoMerge
 	}
 	tests := []struct {
 		name    string
@@ -20,14 +20,14 @@ func TestService_CreateAutoMargeTask(t *testing.T) {
 		{
 			name: "test",
 			args: args{
-				taskInfo: &models.TaskAutoMarge{
+				taskInfo: &models.TaskAutoMerge{
 					ProjectIDs:   []int{437},
 					GroupIDs:     nil,
 					SourceBranch: "dev",
 					TargetBranch: "master",
 					Title:        "auto dev",
 					ReviewerID:   nil,
-					IntervalTime: time.Second * 2,
+					IntervalTime: 2,
 					CreatedTime:  time.Now(),
 					Enable:       false,
 					Cancel:       nil,
@@ -41,8 +41,8 @@ func TestService_CreateAutoMargeTask(t *testing.T) {
 			p := &Service{
 				platform: platform.NewGitlab(),
 			}
-			if err := p.CreateAutoMargeTask(tt.args.taskInfo); (err != nil) != tt.wantErr {
-				t.Errorf("CreateAutoMargeTask() error = %v, wantErr %v", err, tt.wantErr)
+			if err := p.CreateAutoMergeTask(tt.args.taskInfo); (err != nil) != tt.wantErr {
+				t.Errorf("CreateAutoMergeTask() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 		select {}

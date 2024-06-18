@@ -8,6 +8,7 @@ import (
 	"gitlab-auto-merge/models"
 	"gitlab-auto-merge/pkg/httpP"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -37,7 +38,7 @@ func NewGitlab() *Gitlab {
 }
 
 // 获取自己的信息
-func (p *Gitlab) GetOwnInfo() (user *models.UserInfo, err error) {
+func (p *Gitlab) GetOwnInfo() (user models.UserInfo, err error) {
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
 		Method:      http.MethodGet,
 		Url:         "/user",
@@ -58,7 +59,7 @@ func (p *Gitlab) GetOwnInfo() (user *models.UserInfo, err error) {
 }
 
 // 获取用户的信息
-func (p *Gitlab) GetUserByName(name string) (users []*models.UserInfo, err error) {
+func (p *Gitlab) GetUserByName(name string) (users []models.UserInfo, err error) {
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
 		Method:  http.MethodGet,
 		Url:     "/users",
@@ -82,7 +83,7 @@ func (p *Gitlab) GetUserByName(name string) (users []*models.UserInfo, err error
 }
 
 // 获取用户的群组
-func (p *Gitlab) GetGroups() (groups []*models.GroupInfo, err error) {
+func (p *Gitlab) GetGroups() (groups []models.GroupInfo, err error) {
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
 		Method:  http.MethodGet,
 		Url:     "/groups",
@@ -104,16 +105,18 @@ func (p *Gitlab) GetGroups() (groups []*models.GroupInfo, err error) {
 }
 
 // 获取组下的项目
-func (p *Gitlab) GetGroupProjects(groupID int) (projects []*models.ProjectInfo, err error) {
-	url := fmt.Sprintf("/groups/%d/projects", groupID)
+func (p *Gitlab) GetGroupProjects(groupID int) (projects []models.ProjectInfo, err error) {
+	urlStr := fmt.Sprintf("/groups/%d/projects", groupID)
 	opt := httpP.RequestOption{
 		Method:  http.MethodGet,
-		Url:     url,
+		Url:     urlStr,
 		Headers: nil,
 		QueryParams: map[string]string{
-			"simple":            "true",
-			"order_by":          "id",
-			"include_subgroups": "true",
+			"simple":            "true",  //获取简单信息
+			"order_by":          "id",    //按id排序
+			"include_subgroups": "true",  //获取子组下的项目
+			"archived":          "false", //获取没有归档的项目
+			"per_page":          "20",    //每次获取20条
 		},
 		Body: nil,
 	}
@@ -122,7 +125,7 @@ func (p *Gitlab) GetGroupProjects(groupID int) (projects []*models.ProjectInfo, 
 	if err != nil {
 		return
 	}
-	var resProjects []*models.ProjectInfo
+	var resProjects = make([]models.ProjectInfo, 0, 20)
 	err = json.Unmarshal(res, &resProjects)
 	if err != nil {
 		return
@@ -137,6 +140,7 @@ func (p *Gitlab) GetGroupProjects(groupID int) (projects []*models.ProjectInfo, 
 		if err != nil {
 			return
 		}
+		resProjects = make([]models.ProjectInfo, 0, 20)
 		err = json.Unmarshal(res, &resProjects)
 		if err != nil {
 			return
@@ -146,10 +150,10 @@ func (p *Gitlab) GetGroupProjects(groupID int) (projects []*models.ProjectInfo, 
 }
 
 // 获取能够查看的项目
-func (p *Gitlab) GetProjects() (projects []*models.ProjectInfo, err error) {
-	url := "/projects"
+func (p *Gitlab) GetProjects() (projects []models.ProjectInfo, err error) {
+	urlStr := "/projects"
 	opt := httpP.RequestOption{
-		Url:    url,
+		Url:    urlStr,
 		Method: http.MethodGet,
 		QueryParams: map[string]string{
 			"simple":     "true",
@@ -158,7 +162,7 @@ func (p *Gitlab) GetProjects() (projects []*models.ProjectInfo, err error) {
 			"pagination": "keyset",
 			"order_by":   "id",
 			"sort":       "desc",
-			"per_page":   "10",
+			"per_page":   "20",
 		},
 	}
 	pre := httpP.NewPreRequest(p.pre, opt)
@@ -166,7 +170,7 @@ func (p *Gitlab) GetProjects() (projects []*models.ProjectInfo, err error) {
 	if err != nil {
 		return
 	}
-	var resProjects []*models.ProjectInfo
+	var resProjects = make([]models.ProjectInfo, 0, 20)
 	err = json.Unmarshal(res, &resProjects)
 	if err != nil {
 		return
@@ -181,6 +185,7 @@ func (p *Gitlab) GetProjects() (projects []*models.ProjectInfo, err error) {
 		if err != nil {
 			return
 		}
+		resProjects = make([]models.ProjectInfo, 0, 20)
 		err = json.Unmarshal(res, &resProjects)
 		if err != nil {
 			return
@@ -192,9 +197,9 @@ func (p *Gitlab) GetProjects() (projects []*models.ProjectInfo, err error) {
 // 创建合并请求
 func (p *Gitlab) CreateMerge(body models.MergeRequest) (err error) {
 
-	url := fmt.Sprintf("/projects/%d/merge_requests", body.Id)
+	urlStr := fmt.Sprintf("/projects/%d/merge_requests", body.Id)
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Url:     url,
+		Url:     urlStr,
 		Method:  http.MethodPost,
 		Headers: nil,
 		Body:    body,
@@ -209,7 +214,6 @@ func (p *Gitlab) CreateMerge(body models.MergeRequest) (err error) {
 	if err != nil {
 		return
 	}
-
 	if len(resInfo.Message) != 0 {
 		if strings.Contains(fmt.Sprintf("%v", resInfo.Message), "already exists") {
 			//TODO:请求已存在是否需要打印
@@ -222,10 +226,11 @@ func (p *Gitlab) CreateMerge(body models.MergeRequest) (err error) {
 }
 
 // 获取分支详情
-func (p *Gitlab) GetBranch(projectID int, branchName string) (branch *models.BranchInfo, err error) {
-	url := fmt.Sprintf("/projects/%d/repository/branches/%s", projectID, branchName)
+func (p *Gitlab) GetBranch(projectID int, branchName string) (branch models.BranchInfo, err error) {
+	branchName = url.PathEscape(branchName)
+	urlStr := fmt.Sprintf("/projects/%d/repository/branches/%s", projectID, branchName)
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Url:         url,
+		Url:         urlStr,
 		Method:      http.MethodGet,
 		Headers:     nil,
 		QueryParams: nil,
@@ -242,11 +247,32 @@ func (p *Gitlab) GetBranch(projectID int, branchName string) (branch *models.Bra
 	return
 }
 
+// 获取项目分支
+func (p *Gitlab) GetProjectBranches(projectID int) (branches []models.BranchInfo, err error) {
+	urlStr := fmt.Sprintf("/projects/%d/repository/branches", projectID)
+	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
+		Url:         urlStr,
+		Method:      http.MethodGet,
+		Headers:     nil,
+		QueryParams: nil,
+		Body:        nil,
+	})
+	res, err := pre.GetRespBody()
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(res, &branches)
+	if err != nil {
+		return
+	}
+	return
+}
+
 // 获取提交存在的分支
 func (p *Gitlab) GetCommitBranches(projectID int, sha string) (branches []string, err error) {
-	url := fmt.Sprintf("/projects/%d/repository/commits/%s/refs", projectID, sha)
+	urlStr := fmt.Sprintf("/projects/%d/repository/commits/%s/refs", projectID, sha)
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Url:     url,
+		Url:     urlStr,
 		Method:  http.MethodGet,
 		Headers: nil,
 		QueryParams: map[string]string{
@@ -273,13 +299,26 @@ func (p *Gitlab) GetCommitBranches(projectID int, sha string) (branches []string
 }
 
 // 自动提交合并请求
-func (p *Gitlab) AutoMarge(req models.MergeRequest) (err error) {
-	branchInfo, err := p.GetBranch(req.Id, req.SourceBranch)
+func (p *Gitlab) AutoMerge(req models.MergeRequest) (err error) {
+	var sourceBranchInfo models.BranchInfo
+	var targetBranchInfo models.BranchInfo
+	branches, err := p.GetProjectBranches(req.Id)
 	if err != nil {
 		return err
 	}
-
-	mrBranchs, err := p.GetCommitBranches(req.Id, branchInfo.Commit.ID)
+	for _, branch := range branches {
+		if branch.Name == req.SourceBranch {
+			sourceBranchInfo = branch
+		}
+		if branch.Name == req.TargetBranch {
+			targetBranchInfo = branch
+		}
+	}
+	if len(sourceBranchInfo.Name) == 0 || len(targetBranchInfo.Name) == 0 {
+		// 有分支不存在
+		return nil
+	}
+	mrBranchs, err := p.GetCommitBranches(req.Id, sourceBranchInfo.Commit.ID)
 	if err != nil {
 		return err
 	}

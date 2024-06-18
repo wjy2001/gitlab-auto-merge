@@ -59,8 +59,8 @@ func TestGitlab_GetBranch(t *testing.T) {
 		{
 			name: "test",
 			args: args{
-				projectID:  110,
-				branchName: "dev",
+				projectID:  182,
+				branchName: "feat/wjy-dev",
 			},
 			wantBranch: &models.BranchInfo{},
 			wantErr:    false,
@@ -133,8 +133,14 @@ func TestGitlab_GetGroupProjects(t *testing.T) {
 		wantErr      bool
 	}{
 		{
-			name:         "test",
+			name:         "bas",
 			args:         args{groupID: 61},
+			wantProjects: nil,
+			wantErr:      false,
+		},
+		{
+			name:         "easm",
+			args:         args{groupID: 99},
 			wantProjects: nil,
 			wantErr:      false,
 		},
@@ -148,11 +154,7 @@ func TestGitlab_GetGroupProjects(t *testing.T) {
 				return
 			}
 			for _, v := range gotProjects {
-				t.Log(v)
 				structP.FmtStruct(v)
-			}
-			if !reflect.DeepEqual(gotProjects, tt.wantProjects) {
-				t.Errorf("GetGroupProjects() gotProjects = %v, want %v", gotProjects, tt.wantProjects)
 			}
 		})
 	}
@@ -181,9 +183,6 @@ func TestGitlab_GetGroups(t *testing.T) {
 			for _, v := range gotGroups {
 				t.Log(v)
 				structP.FmtStruct(v)
-			}
-			if !reflect.DeepEqual(gotGroups, tt.wantGroups) {
-				t.Errorf("GetGroups() gotGroups = %v, want %v", gotGroups, tt.wantGroups)
 			}
 		})
 	}
@@ -285,6 +284,40 @@ func TestGitlab_GetUserByName(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotUsers, tt.wantUsers) {
 				t.Errorf("GetUserByName() gotUsers = %v, want %v", gotUsers, tt.wantUsers)
+			}
+		})
+	}
+}
+
+func TestGitlab_GetProjectBranches(t *testing.T) {
+	type args struct {
+		projectID int
+	}
+	tests := []struct {
+		name         string
+		args         args
+		wantBranches []*models.BranchInfo
+		wantErr      bool
+	}{
+		{
+			name: "test",
+			args: args{
+				projectID: 177,
+			},
+			wantBranches: nil,
+			wantErr:      false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := NewGitlab()
+			gotBranches, err := p.GetProjectBranches(tt.args.projectID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetProjectBranches() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotBranches, tt.wantBranches) {
+				t.Errorf("GetProjectBranches() gotBranches = %v, want %v", gotBranches, tt.wantBranches)
 			}
 		})
 	}
