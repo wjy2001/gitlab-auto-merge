@@ -2,6 +2,8 @@
 
 无图形化版本的执行方法
 
+将配置文件conf.json和taskMapInfo.json 放在执行文件同一目录下执行即可
+
 ### 基础配置
 
 > conf.json
@@ -35,23 +37,41 @@
 
 > taskMapInfo.json
 
+支持多任务同时进行
+
 ```json
 [
   {
-    "project_ids": [										
-      110
+    "project_ids": [],
+    "group_ids": [
+        61
     ],
-    "group_ids": [],
+    "source_branch": "feat/wjy-dev",										
+    "target_branch": "dev",									
+    "title": "auto feat",											
+    "reviewer_id": [											
+      102
+    ],
+    "interval_time": 60,								
+    "created_time": "2024-06-17T18:08:12.0354972+08:00",
+    "remove_source_branch": true,
+    "enable": true												
+  },  
+  {
+    "project_ids": [],
+    "group_ids": [
+        61
+    ],
     "source_branch": "dev",										
     "target_branch": "test",									
-    "title": "auto",											
+    "title": "auto dev",											
     "reviewer_id": [											
       102
     ],
     "interval_time": 60,								
     "created_time": "2024-06-14T18:08:12.0354972+08:00",
     "remove_source_branch": false,
-    "enable": false												
+    "enable": true												
   }
 ]
 ```
