@@ -1,5 +1,7 @@
 ## 使用方法
 
+> gui版本由于 多任务展示问题 以及选项框问题 暂时只支持单个任务
+
 无图形化版本的执行方法
 
 将配置文件conf.json和taskMapInfo.json 放在执行文件同一目录下执行即可
@@ -17,6 +19,7 @@
   "project_blacklist": {
     "101": "bas-common-url-fuzzy",
     "102": "bas-common-url-spider",
+    "121": "bas-phish-email-log",
     "153": "bas-upgrade",
     "166": "rule-upgrade-tool",
     "170": "privatization",
@@ -89,3 +92,8 @@
 | enable               | 是否开启            |
 | remove_source_branch | 是否删除源分支         |
 
+## 打包方式
+
+使用makefile 即可
+
+gui打包第一次巨慢 等待即可 后续速度会快
