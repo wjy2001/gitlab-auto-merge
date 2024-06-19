@@ -300,6 +300,10 @@ func (p *Gitlab) AutoMerge(req models.MergeRequest) (err error) {
 			return nil
 		}
 	}
+	//当指定title为空时，使用最新的title
+	if len(req.Title) == 0 {
+		req.Title = sourceBranchInfo.Commit.Title
+	}
 	err = p.CreateMerge(req)
 	if err != nil {
 		return err

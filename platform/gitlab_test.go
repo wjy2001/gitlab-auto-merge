@@ -64,7 +64,7 @@ func TestGitlab_GetBranch(t *testing.T) {
 			name: "test",
 			args: args{
 				projectID:  182,
-				branchName: "feat/wjy-dev",
+				branchName: "dev",
 			},
 			wantBranch: &models.BranchInfo{},
 			wantErr:    false,
