@@ -21,7 +21,7 @@ import (
 var p *service.Service
 
 func main() {
-
+	conf.InitConfig()
 	p = service.NewService(platform.NewGitlab())
 
 	myApp := app.New()

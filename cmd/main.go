@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gitlab-auto-merge/conf"
 	"gitlab-auto-merge/platform"
 	"gitlab-auto-merge/service"
 	"log"
@@ -11,6 +12,7 @@ import (
 
 // 无图形版本
 func main() {
+	conf.InitConfig()
 	s := service.NewService(platform.NewGitlab())
 	err := s.LoadTaskMapInfo()
 	if err != nil {

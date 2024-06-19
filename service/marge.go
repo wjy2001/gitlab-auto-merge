@@ -146,7 +146,7 @@ func (p *Service) DelTask() {
 	taskMapInfo.rwlock.Unlock()
 }
 
-// 通过文件加载任务
+// LoadTaskMapInfo 通过文件加载任务
 func (p *Service) LoadTaskMapInfo() (err error) {
 	taskMapByte, err := os.ReadFile(taskFileName)
 	if err != nil {

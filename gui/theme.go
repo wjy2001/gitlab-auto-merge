@@ -12,7 +12,7 @@ type MyTheme struct{}
 
 var _ fyne.Theme = (*MyTheme)(nil)
 
-// return bundled font resource
+// Font return bundled font resource
 func (*MyTheme) Font(s fyne.TextStyle) fyne.Resource {
 	return &fyne.StaticResource{
 		StaticName:    "font.ttf",

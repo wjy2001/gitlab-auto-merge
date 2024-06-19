@@ -1,12 +1,16 @@
 package platform
 
 import (
+	"gitlab-auto-merge/conf"
 	"gitlab-auto-merge/models"
 	"gitlab-auto-merge/pkg/structP"
 	"reflect"
 	"testing"
 )
 
+func init() {
+	conf.InitConfig()
+}
 func TestGitlab_CreateMerge(t *testing.T) {
 
 	type args struct {

@@ -1,12 +1,16 @@
 package service
 
 import (
+	"gitlab-auto-merge/conf"
 	"gitlab-auto-merge/models"
 	"gitlab-auto-merge/platform"
 	"testing"
 	"time"
 )
 
+func init() {
+	conf.InitConfig()
+}
 func TestService_CreateAutoMargeTask(t *testing.T) {
 
 	type args struct {

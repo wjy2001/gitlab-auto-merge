@@ -11,10 +11,7 @@ import (
 var gconf Config
 var rwlock sync.RWMutex
 
-func init() {
-	initConfig()
-}
-func initConfig() {
+func InitConfig() {
 	//允许初始化没有值
 	confBytes, err := os.ReadFile("./conf.json")
 	if err != nil {
@@ -23,7 +20,7 @@ func initConfig() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		initConfig()
+		InitConfig()
 		return
 	}
 
