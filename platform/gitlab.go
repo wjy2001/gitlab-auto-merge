@@ -40,11 +40,8 @@ func NewGitlab() *Gitlab {
 // 获取自己的信息
 func (p *Gitlab) GetOwnInfo() (user models.UserInfo, err error) {
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Method:      http.MethodGet,
-		Url:         "/user",
-		Headers:     nil,
-		QueryParams: nil,
-		Body:        nil,
+		Method: http.MethodGet,
+		Url:    "/user",
 	})
 
 	res, err := pre.GetRespBody()
@@ -61,13 +58,11 @@ func (p *Gitlab) GetOwnInfo() (user models.UserInfo, err error) {
 // 获取用户的信息
 func (p *Gitlab) GetUserByName(name string) (users []models.UserInfo, err error) {
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Method:  http.MethodGet,
-		Url:     "/users",
-		Headers: nil,
+		Method: http.MethodGet,
+		Url:    "/users",
 		QueryParams: map[string]string{
 			"search": name,
 		},
-		Body: nil,
 	})
 
 	res, err := pre.GetRespBody()
@@ -85,13 +80,11 @@ func (p *Gitlab) GetUserByName(name string) (users []models.UserInfo, err error)
 // 获取用户的群组
 func (p *Gitlab) GetGroups() (groups []models.GroupInfo, err error) {
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Method:  http.MethodGet,
-		Url:     "/groups",
-		Headers: nil,
+		Method: http.MethodGet,
+		Url:    "/groups",
 		QueryParams: map[string]string{
 			"order_by": "id",
 		},
-		Body: nil,
 	})
 	res, err := pre.GetRespBody()
 	if err != nil {
@@ -108,9 +101,8 @@ func (p *Gitlab) GetGroups() (groups []models.GroupInfo, err error) {
 func (p *Gitlab) GetGroupProjects(groupID int) (projects []models.ProjectInfo, err error) {
 	urlStr := fmt.Sprintf("/groups/%d/projects", groupID)
 	opt := httpP.RequestOption{
-		Method:  http.MethodGet,
-		Url:     urlStr,
-		Headers: nil,
+		Method: http.MethodGet,
+		Url:    urlStr,
 		QueryParams: map[string]string{
 			"simple":            "true",  //获取简单信息
 			"order_by":          "id",    //按id排序
@@ -118,33 +110,27 @@ func (p *Gitlab) GetGroupProjects(groupID int) (projects []models.ProjectInfo, e
 			"archived":          "false", //获取没有归档的项目
 			"per_page":          "20",    //每次获取20条
 		},
-		Body: nil,
 	}
 	pre := httpP.NewPreRequest(p.pre, opt)
-	res, err := pre.GetRespBody()
-	if err != nil {
-		return
-	}
-	var resProjects = make([]models.ProjectInfo, 0, 20)
-	err = json.Unmarshal(res, &resProjects)
-	if err != nil {
-		return
-	}
-	for len(resProjects) != 0 {
+
+	res := []byte{}
+	resProjects := []models.ProjectInfo{}
+	for {
+		if res, err = pre.GetRespBody(); err != nil {
+			return
+		}
+		if err = json.Unmarshal(res, &resProjects); err != nil {
+			return
+		}
+		if len(resProjects) == 0 {
+			//如果没有项目了，跳出循环
+			break
+		}
+
 		projects = append(projects, resProjects...)
 
 		opt.QueryParams["id_before"] = strconv.Itoa(resProjects[len(resProjects)-1].ID)
 		pre = httpP.NewPreRequest(p.pre, opt)
-		var res []byte
-		res, err = pre.GetRespBody()
-		if err != nil {
-			return
-		}
-		resProjects = make([]models.ProjectInfo, 0, 20)
-		err = json.Unmarshal(res, &resProjects)
-		if err != nil {
-			return
-		}
 	}
 	return
 }
@@ -166,30 +152,25 @@ func (p *Gitlab) GetProjects() (projects []models.ProjectInfo, err error) {
 		},
 	}
 	pre := httpP.NewPreRequest(p.pre, opt)
-	res, err := pre.GetRespBody()
-	if err != nil {
-		return
-	}
-	var resProjects = make([]models.ProjectInfo, 0, 20)
-	err = json.Unmarshal(res, &resProjects)
-	if err != nil {
-		return
-	}
-	for len(resProjects) != 0 {
+
+	res := []byte{}
+	resProjects := []models.ProjectInfo{}
+	for {
+		if res, err = pre.GetRespBody(); err != nil {
+			return
+		}
+		if err = json.Unmarshal(res, &resProjects); err != nil {
+			return
+		}
+		if len(resProjects) == 0 {
+			//如果没有项目了，跳出循环
+			break
+		}
+
 		projects = append(projects, resProjects...)
 
 		opt.QueryParams["id_before"] = strconv.Itoa(resProjects[len(resProjects)-1].ID)
 		pre = httpP.NewPreRequest(p.pre, opt)
-		var res []byte
-		res, err = pre.GetRespBody()
-		if err != nil {
-			return
-		}
-		resProjects = make([]models.ProjectInfo, 0, 20)
-		err = json.Unmarshal(res, &resProjects)
-		if err != nil {
-			return
-		}
 	}
 	return
 }
@@ -199,10 +180,9 @@ func (p *Gitlab) CreateMerge(body models.MergeRequest) (err error) {
 
 	urlStr := fmt.Sprintf("/projects/%d/merge_requests", body.Id)
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Url:     urlStr,
-		Method:  http.MethodPost,
-		Headers: nil,
-		Body:    body,
+		Url:    urlStr,
+		Method: http.MethodPost,
+		Body:   body,
 	})
 	res, err := pre.GetRespBody()
 	if err != nil {
@@ -230,11 +210,8 @@ func (p *Gitlab) GetBranch(projectID int, branchName string) (branch models.Bran
 	branchName = url.PathEscape(branchName)
 	urlStr := fmt.Sprintf("/projects/%d/repository/branches/%s", projectID, branchName)
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Url:         urlStr,
-		Method:      http.MethodGet,
-		Headers:     nil,
-		QueryParams: nil,
-		Body:        nil,
+		Url:    urlStr,
+		Method: http.MethodGet,
 	})
 	res, err := pre.GetRespBody()
 	if err != nil {
@@ -251,11 +228,8 @@ func (p *Gitlab) GetBranch(projectID int, branchName string) (branch models.Bran
 func (p *Gitlab) GetProjectBranches(projectID int) (branches []models.BranchInfo, err error) {
 	urlStr := fmt.Sprintf("/projects/%d/repository/branches", projectID)
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Url:         urlStr,
-		Method:      http.MethodGet,
-		Headers:     nil,
-		QueryParams: nil,
-		Body:        nil,
+		Url:    urlStr,
+		Method: http.MethodGet,
 	})
 	res, err := pre.GetRespBody()
 	if err != nil {
@@ -272,13 +246,11 @@ func (p *Gitlab) GetProjectBranches(projectID int) (branches []models.BranchInfo
 func (p *Gitlab) GetCommitBranches(projectID int, sha string) (branches []string, err error) {
 	urlStr := fmt.Sprintf("/projects/%d/repository/commits/%s/refs", projectID, sha)
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
-		Url:     urlStr,
-		Method:  http.MethodGet,
-		Headers: nil,
+		Url:    urlStr,
+		Method: http.MethodGet,
 		QueryParams: map[string]string{
 			"type": "branch", //类型 branch,tag,all 默认是all
 		},
-		Body: nil,
 	})
 	res, err := pre.GetRespBody()
 	if err != nil {
