@@ -114,7 +114,7 @@ func (p *Gitlab) GetGroupProjects(groupID int) (projects []models.ProjectInfo, e
 	pre := httpP.NewPreRequest(p.pre, opt)
 
 	res := []byte{}
-	resProjects := []models.ProjectInfo{}
+	resProjects := make([]models.ProjectInfo, 0, 20)
 	for {
 		if res, err = pre.GetRespBody(); err != nil {
 			return
@@ -154,7 +154,7 @@ func (p *Gitlab) GetProjects() (projects []models.ProjectInfo, err error) {
 	pre := httpP.NewPreRequest(p.pre, opt)
 
 	res := []byte{}
-	resProjects := []models.ProjectInfo{}
+	resProjects := make([]models.ProjectInfo, 0, 20)
 	for {
 		if res, err = pre.GetRespBody(); err != nil {
 			return
@@ -227,18 +227,34 @@ func (p *Gitlab) GetBranch(projectID int, branchName string) (branch models.Bran
 // GetProjectBranches 获取项目分支
 func (p *Gitlab) GetProjectBranches(projectID int) (branches []models.BranchInfo, err error) {
 	urlStr := fmt.Sprintf("/projects/%d/repository/branches", projectID)
+	var page int64 = 1
+	var pageSize int64 = 20
 	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
 		Url:    urlStr,
 		Method: http.MethodGet,
+		QueryParams: map[string]string{
+			"per_page": strconv.FormatInt(pageSize, 10), //每次获取20条
+			"page":     strconv.FormatInt(page, 10),     //页数
+		},
 	})
-	res, err := pre.GetRespBody()
-	if err != nil {
-		return
+	var res []byte
+	resInfo := make([]models.BranchInfo, 0, pageSize)
+	for {
+		if res, err = pre.GetRespBody(); err != nil {
+			return
+		}
+		if err = json.Unmarshal(res, &resInfo); err != nil {
+			return
+		}
+		if len(resInfo) == 0 {
+			//如果没有项目了，跳出循环
+			break
+		}
+		branches = append(branches, resInfo...)
+		page = page + 1
+		pre.Option.QueryParams["page"] = strconv.FormatInt(page, 10)
 	}
-	err = json.Unmarshal(res, &branches)
-	if err != nil {
-		return
-	}
+
 	return
 }
 
@@ -310,4 +326,50 @@ func (p *Gitlab) AutoMerge(req models.MergeRequest) (err error) {
 	}
 
 	return
+}
+
+// GetGroupsMerges 获取群组合并请求
+func (p *Gitlab) GetGroupsMerges(groupID int, req models.GetMergeReq) (merges []models.MergeInfo, err error) {
+
+	urlStr := fmt.Sprintf("/groups/%d/merge_requests", groupID)
+	var page int64 = 1
+	var pageSize int64 = 20
+	reqMap := req.ToStringMap()
+	reqMap["per_page"] = strconv.FormatInt(pageSize, 10)
+	reqMap["page"] = strconv.FormatInt(page, 10)
+
+	opt := httpP.RequestOption{
+		Url:         urlStr,
+		Method:      http.MethodGet,
+		QueryParams: reqMap,
+	}
+	pre := httpP.NewPreRequest(p.pre, opt)
+	var res []byte
+	resInfo := make([]models.MergeInfo, 0, pageSize)
+	for {
+		if res, err = pre.GetRespBody(); err != nil {
+			return
+		}
+		if err = json.Unmarshal(res, &resInfo); err != nil {
+			return
+		}
+		if len(resInfo) == 0 {
+			//如果没有项目了，跳出循环
+			break
+		}
+		merges = append(merges, resInfo...)
+		page = page + 1
+		pre.Option.QueryParams["page"] = strconv.FormatInt(page, 10)
+	}
+	return
+}
+
+// UpdateMergeRequest 修改合并请求
+func (p *Gitlab) UpdateMergeRequest(projectID int, mergeID int, req models.MergeRequest) (err error) {
+	urlStr := fmt.Sprintf("/projects/%d/merge_requests/%d", projectID, mergeID)
+	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
+		Url:    urlStr,
+		Method: http.MethodPut,
+		Body:   req,
+	})
 }

@@ -326,3 +326,44 @@ func TestGitlab_GetProjectBranches(t *testing.T) {
 		})
 	}
 }
+
+func TestGitlab_GetGroupsMerges(t *testing.T) {
+	type args struct {
+		groupID int
+		req     models.GetMergeReq
+	}
+	tests := []struct {
+		name       string
+		args       args
+		wantMerges []models.MergeInfo
+		wantErr    bool
+	}{
+		{
+			name: "test uat",
+			args: args{
+				groupID: 61,
+				req: models.GetMergeReq{
+					Search:       "auto test to uat",
+					State:        "opened",
+					SourceBranch: "test",
+					TargetBranch: "uat",
+				},
+			},
+			wantMerges: nil,
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := NewGitlab()
+			gotMerges, err := p.GetGroupsMerges(tt.args.groupID, tt.args.req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetGroupsMerges() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotMerges, tt.wantMerges) {
+				t.Errorf("GetGroupsMerges() gotMerges = %v, want %v", gotMerges, tt.wantMerges)
+			}
+		})
+	}
+}

@@ -60,6 +60,8 @@ func (p *Service) CreateAutoMergeTask(taskInfo *models.TaskAutoMerge) (err error
 func (p *Service) creatTask(taskInfo *models.TaskAutoMerge) {
 	var projectMap = make(map[int]string)
 	config := conf.GetConfig()
+	//TODO 没有给直接配置的项目id 进行检测 和打印
+
 	for _, groupID := range taskInfo.GroupIDs {
 		projectInfo, err := p.platform.GetGroupProjects(groupID)
 		if err != nil {
