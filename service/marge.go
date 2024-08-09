@@ -20,9 +20,9 @@ const taskFileName = "taskMapInfo.json"
 // CreateSerialExecutionAutoMergeTask 创建串行执行任务
 func (p *Service) CreateSerialExecutionAutoMergeTask(taskInfo []models.TaskAutoMerge) (err error) {
 	var enableTaskInfo = make([]*models.TaskAutoMerge, 0, len(taskInfo))
-	for _, info := range taskInfo {
+	for i, info := range taskInfo {
 		if info.Enable {
-			enableTaskInfo = append(enableTaskInfo, &info)
+			enableTaskInfo = append(enableTaskInfo, &taskInfo[i])
 		}
 	}
 
