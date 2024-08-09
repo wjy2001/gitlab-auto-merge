@@ -17,6 +17,40 @@ var wg sync.WaitGroup
 
 const taskFileName = "taskMapInfo.json"
 
+// CreateSerialExecutionAutoMergeTask 创建串行执行任务
+func (p *Service) CreateSerialExecutionAutoMergeTask(taskInfo []models.TaskAutoMerge) (err error) {
+	for _, info := range taskInfo {
+		if !info.Check() {
+			return fmt.Errorf("taskInfo check fail")
+		}
+		md5Str := hashP.Md5(taskInfo)
+		if len(md5Str) == 0 {
+			return fmt.Errorf("md5Str is empty")
+		}
+		taskMapInfo.rwlock.Lock()
+		taskMapInfo.taskMap[md5Str] = &info
+		taskMapInfo.rwlock.Unlock()
+	}
+
+	var ctx context.Context
+	ctx, cancel := context.WithCancel(context.Background())
+	for _, info := range taskInfo {
+		info.Cancel = cancel
+	}
+	for {
+		select {
+		case <-ctx.Done():
+		default:
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		for _, info := range taskInfo {
+			p.creatTask(&info)
+		}
+
+	}
+}
+
 func (p *Service) CreateAutoMergeTask(taskInfo *models.TaskAutoMerge) (err error) {
 	if !taskInfo.Check() {
 		return fmt.Errorf("taskInfo check fail")
@@ -45,7 +79,7 @@ func (p *Service) CreateAutoMergeTask(taskInfo *models.TaskAutoMerge) (err error
 				}
 				p.creatTask(taskInfo)
 			default:
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(5 * time.Second)
 			}
 		}
 	}()
@@ -79,7 +113,8 @@ func (p *Service) creatTask(taskInfo *models.TaskAutoMerge) {
 			taskInfo.ProjectIDs = append(taskInfo.ProjectIDs, project.ID)
 		}
 	}
-	log.Println("开始检测", projectMap)
+
+	log.Println(taskInfo.SourceBranch, "到", taskInfo.TargetBranch, "开始检测", projectMap)
 	//TODO：由于是使用http 貌似没有必要加上超时
 	//cctx, _ := context.WithTimeout(ctx, time.Minute*10)
 	for _, projectID := range taskInfo.ProjectIDs {
@@ -159,14 +194,20 @@ func (p *Service) LoadTaskMapInfo() (err error) {
 	if err != nil {
 		return
 	}
-	for i, merge := range taskMap {
-		if !merge.Check() {
-			continue
-		}
-		err = p.CreateAutoMergeTask(&taskMap[i])
-		if err != nil {
-			return err
-		}
+
+	err = p.CreateSerialExecutionAutoMergeTask(taskMap)
+	if err != nil {
+		return
 	}
+	// 使用串行执行降低压力
+	//for i, merge := range taskMap {
+	//	if !merge.Check() {
+	//		continue
+	//	}
+	//	err = p.CreateAutoMergeTask(&taskMap[i])
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return
 }

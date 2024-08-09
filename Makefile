@@ -3,7 +3,7 @@ build:
 	cd cmd && make windows
 	cd cmd && make linux
 
-cmd:
+winAndLinux:
 	cd cmd && make windows
 	cd cmd && make linux
 

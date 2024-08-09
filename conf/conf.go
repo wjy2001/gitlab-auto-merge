@@ -31,8 +31,9 @@ func InitConfig() {
 }
 
 type Parameter struct {
-	BasicUrl string `json:"basic_url"`
-	Token    string `json:"token"`
+	BasicUrl      string `json:"basic_url"`
+	Token         string `json:"token"`
+	TLSSkiPVerify bool   `json:"tls_skip_verify"` //跳过证书验证
 }
 type Config struct {
 	Parameter        Parameter      `json:"parameter"`

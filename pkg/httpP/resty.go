@@ -1,6 +1,12 @@
 package httpP
 
-import "github.com/go-resty/resty/v2"
+import (
+	"github.com/go-resty/resty/v2"
+	"log"
+	"sync/atomic"
+)
+
+var Sum int64
 
 type PreRequest struct {
 	client *resty.Client
@@ -43,6 +49,10 @@ func (r *PreRequest) getResp(req *resty.Request) (*resty.Response, error) {
 }
 
 func (r *PreRequest) GetRespBody() ([]byte, error) {
+	sum := atomic.AddInt64(&Sum, 1)
+	if sum%10 == 0 {
+		log.Println("sum:", sum)
+	}
 	req := r.newReq()
 	resp, err := r.getResp(req)
 	return resp.Body(), err

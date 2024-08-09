@@ -1,12 +1,14 @@
 package platform
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"gitlab-auto-merge/conf"
 	"gitlab-auto-merge/models"
 	"gitlab-auto-merge/pkg/httpP"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -27,14 +29,20 @@ func NewGitlab() *Gitlab {
 	baseHeaders := map[string]string{
 		"Private-Token": c.Parameter.Token,
 	}
-
-	return &Gitlab{
+	gitlab := &Gitlab{
 		pre: httpP.NewPreRequestClient(httpP.InitRequest{
 			BaseURL:         baseUrl,
 			BaseHeaders:     baseHeaders,
 			BaseQueryParams: nil,
 		}),
 	}
+	if c.Parameter.TLSSkiPVerify {
+		log.Println("跳过证书验证")
+		gitlab.pre.SetTLSClientConfig(&tls.Config{
+			InsecureSkipVerify: true,
+		})
+	}
+	return gitlab
 }
 
 // GetOwnInfo 获取自己的信息
@@ -367,9 +375,10 @@ func (p *Gitlab) GetGroupsMerges(groupID int, req models.GetMergeReq) (merges []
 // UpdateMergeRequest 修改合并请求
 func (p *Gitlab) UpdateMergeRequest(projectID int, mergeID int, req models.MergeRequest) (err error) {
 	urlStr := fmt.Sprintf("/projects/%d/merge_requests/%d", projectID, mergeID)
-	pre := httpP.NewPreRequest(p.pre, httpP.RequestOption{
+	_ = httpP.NewPreRequest(p.pre, httpP.RequestOption{
 		Url:    urlStr,
 		Method: http.MethodPut,
 		Body:   req,
 	})
+	return
 }
