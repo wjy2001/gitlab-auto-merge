@@ -1,9 +1,9 @@
-build:
+build-all:
 	cd gui && make windows
 	cd cmd && make windows
 	cd cmd && make linux
 
-winAndLinux:
+build:
 	cd cmd && make windows
 	cd cmd && make linux
 
