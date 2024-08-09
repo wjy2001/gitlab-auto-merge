@@ -19,7 +19,14 @@ const taskFileName = "taskMapInfo.json"
 
 // CreateSerialExecutionAutoMergeTask 创建串行执行任务
 func (p *Service) CreateSerialExecutionAutoMergeTask(taskInfo []models.TaskAutoMerge) (err error) {
+	var enableTaskInfo = make([]*models.TaskAutoMerge, 0, len(taskInfo))
 	for _, info := range taskInfo {
+		if info.Enable {
+			enableTaskInfo = append(enableTaskInfo, &info)
+		}
+	}
+
+	for _, info := range enableTaskInfo {
 		if !info.Check() {
 			return fmt.Errorf("taskInfo check fail")
 		}
@@ -28,13 +35,13 @@ func (p *Service) CreateSerialExecutionAutoMergeTask(taskInfo []models.TaskAutoM
 			return fmt.Errorf("md5Str is empty")
 		}
 		taskMapInfo.rwlock.Lock()
-		taskMapInfo.taskMap[md5Str] = &info
+		taskMapInfo.taskMap[md5Str] = info
 		taskMapInfo.rwlock.Unlock()
 	}
 
 	var ctx context.Context
 	ctx, cancel := context.WithCancel(context.Background())
-	for _, info := range taskInfo {
+	for _, info := range enableTaskInfo {
 		info.Cancel = cancel
 	}
 	for {
@@ -44,8 +51,8 @@ func (p *Service) CreateSerialExecutionAutoMergeTask(taskInfo []models.TaskAutoM
 			time.Sleep(500 * time.Millisecond)
 		}
 
-		for _, info := range taskInfo {
-			p.creatTask(&info)
+		for _, info := range enableTaskInfo {
+			p.creatTask(info)
 		}
 
 	}
