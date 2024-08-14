@@ -5,6 +5,7 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.4.5
 	github.com/go-resty/resty/v2 v2.12.0
+	github.com/google/martian v2.1.0+incompatible
 )
 
 require (

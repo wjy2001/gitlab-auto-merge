@@ -45,6 +45,7 @@ func (p *Service) CreateSerialExecutionAutoMergeTask(taskInfo []models.TaskAutoM
 		info.Cancel = cancel
 	}
 	for {
+		nowTime := time.Now()
 		select {
 		case <-ctx.Done():
 		default:
@@ -54,7 +55,7 @@ func (p *Service) CreateSerialExecutionAutoMergeTask(taskInfo []models.TaskAutoM
 		for _, info := range enableTaskInfo {
 			p.creatTask(info)
 		}
-
+		log.Println("全部任务执行完成，总耗时：", time.Since(nowTime))
 	}
 }
 
@@ -99,13 +100,12 @@ func (p *Service) CreateAutoMergeTask(taskInfo *models.TaskAutoMerge) (err error
 }
 
 func (p *Service) creatTask(taskInfo *models.TaskAutoMerge) {
-	// 初始化请求
-	//TODO 一致保持同一个基础请求 会导致速度下降
-	p.platform.NewPre()
+	nowTime := time.Now()
 	var projectMap = make(map[int]string)
 	config := conf.GetConfig()
 	//TODO 没有给直接配置的项目id 进行检测 和打印
-
+	var projectIDs []int
+	copy(projectIDs, taskInfo.ProjectIDs)
 	for _, groupID := range taskInfo.GroupIDs {
 		projectInfo, err := p.platform.GetGroupProjects(groupID)
 		if err != nil {
@@ -120,14 +120,14 @@ func (p *Service) creatTask(taskInfo *models.TaskAutoMerge) {
 				continue
 			}
 			projectMap[project.ID] = project.Name
-			taskInfo.ProjectIDs = append(taskInfo.ProjectIDs, project.ID)
+			projectIDs = append(projectIDs, project.ID)
 		}
 	}
 
-	log.Println(taskInfo.SourceBranch, "到", taskInfo.TargetBranch, "开始检测", projectMap)
+	log.Println(taskInfo.SourceBranch, "到", taskInfo.TargetBranch, "开始检测")
 	//TODO：由于是使用http 貌似没有必要加上超时
 	//cctx, _ := context.WithTimeout(ctx, time.Minute*10)
-	for _, projectID := range taskInfo.ProjectIDs {
+	for _, projectID := range projectIDs {
 		req := models.MergeRequest{
 			Id:                 projectID,
 			SourceBranch:       taskInfo.SourceBranch,
@@ -142,6 +142,7 @@ func (p *Service) creatTask(taskInfo *models.TaskAutoMerge) {
 			log.Println(err)
 		}
 	}
+	log.Println(taskInfo.SourceBranch, "到", taskInfo.TargetBranch, "完成，耗时", time.Since(nowTime))
 }
 
 func (p *Service) SaveTaskMapInfo() (err error) {

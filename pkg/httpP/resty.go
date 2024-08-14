@@ -2,6 +2,8 @@ package httpP
 
 import (
 	"github.com/go-resty/resty/v2"
+	"log"
+	"time"
 )
 
 type PreRequest struct {
@@ -22,6 +24,9 @@ type InitRequest struct {
 	BaseHeaders     map[string]string
 	BaseQueryParams map[string]string
 }
+
+var reqSum int
+var reqTimeSum time.Duration
 
 // NewPreRequestClient 初始化链接
 func NewPreRequestClient(initRequest InitRequest) *resty.Client {
@@ -45,6 +50,18 @@ func (r *PreRequest) getResp(req *resty.Request) (*resty.Response, error) {
 }
 
 func (r *PreRequest) GetRespBody() ([]byte, error) {
+	nowTime := time.Now()
+	defer func() {
+		reqSum++
+		reqTimeSum += time.Since(nowTime)
+		if reqSum%100 == 0 {
+			if reqTimeSum > 50*time.Second {
+				log.Printf("警告，近100次请求耗时达:%s\n", reqTimeSum)
+			}
+			reqSum = 0
+			reqTimeSum = 0
+		}
+	}()
 	req := r.newReq()
 	resp, err := r.getResp(req)
 	return resp.Body(), err

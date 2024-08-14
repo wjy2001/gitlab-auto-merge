@@ -3,8 +3,6 @@ package platform
 import "gitlab-auto-merge/models"
 
 type Base interface {
-	// NewPre 初始化请求
-	NewPre()
 	// GetOwnInfo 获取自己的信息
 	GetOwnInfo() (user models.UserInfo, err error)
 	// GetUserByName 获取用户的信息
