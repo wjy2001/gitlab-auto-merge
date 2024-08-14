@@ -99,6 +99,9 @@ func (p *Service) CreateAutoMergeTask(taskInfo *models.TaskAutoMerge) (err error
 }
 
 func (p *Service) creatTask(taskInfo *models.TaskAutoMerge) {
+	// 初始化请求
+	//TODO 一致保持同一个基础请求 会导致速度下降
+	p.platform.NewPre()
 	var projectMap = make(map[int]string)
 	config := conf.GetConfig()
 	//TODO 没有给直接配置的项目id 进行检测 和打印

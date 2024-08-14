@@ -23,25 +23,28 @@ type Gitlab struct {
 	pre *resty.Client
 }
 
-func NewGitlab() *Gitlab {
+func (p *Gitlab) NewPre() {
 	c := conf.GetConfig()
 	baseUrl := fmt.Sprint(c.Parameter.BasicUrl, gitlabBasicAuth)
 	baseHeaders := map[string]string{
 		"Private-Token": c.Parameter.Token,
 	}
-	gitlab := &Gitlab{
-		pre: httpP.NewPreRequestClient(httpP.InitRequest{
-			BaseURL:         baseUrl,
-			BaseHeaders:     baseHeaders,
-			BaseQueryParams: nil,
-		}),
-	}
+	p.pre = httpP.NewPreRequestClient(httpP.InitRequest{
+		BaseURL:         baseUrl,
+		BaseHeaders:     baseHeaders,
+		BaseQueryParams: nil,
+	})
 	if c.Parameter.TLSSkiPVerify {
 		log.Println("跳过证书验证")
-		gitlab.pre.SetTLSClientConfig(&tls.Config{
+		p.pre.SetTLSClientConfig(&tls.Config{
 			InsecureSkipVerify: true,
 		})
 	}
+	return
+}
+func NewGitlab() *Gitlab {
+	gitlab := &Gitlab{}
+	gitlab.NewPre()
 	return gitlab
 }
 
